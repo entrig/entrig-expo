@@ -41,3 +41,8 @@ android {
     abortOnError false
   }
 }
+
+dependencies {
+  // Use entrig-android SDK from Maven Central
+  api 'com.entrig:entrig:0.0.7-dev'
+}

@@ -1,50 +1,112 @@
 package expo.modules.entrig
 
+import android.app.Activity
+import android.content.Context
+import android.content.Intent
+import android.util.Log
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
-import java.net.URL
+import expo.modules.kotlin.Promise
+import com.entrig.sdk.Entrig
+import com.entrig.sdk.models.EntrigConfig
+import com.entrig.sdk.models.NotificationEvent
 
 class EntrigModule : Module() {
-  // Each module class must implement the definition function. The definition consists of components
-  // that describes the module's functionality and behavior.
-  // See https://docs.expo.dev/modules/module-api for more details about available components.
+  private val context: Context
+    get() = appContext.reactContext ?: throw IllegalStateException("React context is null")
+
+  private val currentActivity: Activity?
+    get() = appContext.currentActivity
+
   override fun definition() = ModuleDefinition {
-    // Sets the name of the module that JavaScript code will use to refer to the module. Takes a string as an argument.
-    // Can be inferred from module's class name, but it's recommended to set it explicitly for clarity.
-    // The module will be accessible from `requireNativeModule('Entrig')` in JavaScript.
     Name("Entrig")
 
-    // Defines constant property on the module.
-    Constant("PI") {
-      Math.PI
-    }
-
     // Defines event names that the module can send to JavaScript.
-    Events("onChange")
+    Events("onForegroundNotification", "onNotificationOpened")
 
-    // Defines a JavaScript synchronous function that runs the native code on the JavaScript thread.
-    Function("hello") {
-      "Hello world! 👋"
-    }
-
-    // Defines a JavaScript function that always returns a Promise and whose native code
-    // is by default dispatched on the different thread than the JavaScript runtime runs on.
-    AsyncFunction("setValueAsync") { value: String ->
-      // Send an event to JavaScript.
-      sendEvent("onChange", mapOf(
-        "value" to value
-      ))
-    }
-
-    // Enables the module to be used as a native view. Definition components that are accepted as part of
-    // the view definition: Prop, Events.
-    View(EntrigView::class) {
-      // Defines a setter for the `url` prop.
-      Prop("url") { view: EntrigView, url: URL ->
-        view.webView.loadUrl(url.toString())
+    OnCreate {
+      // Set up SDK listeners when module is created
+      Entrig.setOnForegroundNotificationListener { notification ->
+        Log.d("EntrigModule", "Foreground notification: ${notification.toMap()}")
+        sendEvent("onForegroundNotification", notification.toMap())
       }
-      // Defines an event that the view can send to JavaScript.
-      Events("onLoad")
+
+      Entrig.setOnNotificationOpenedListener { notification ->
+        Log.d("EntrigModule", "Notification opened: ${notification.toMap()}")
+        sendEvent("onNotificationOpened", notification.toMap())
+      }
+    }
+
+    // Initialize SDK
+    AsyncFunction("init") { config: Map<String, Any?>, promise: Promise ->
+      val apiKey = config["apiKey"] as? String
+      if (apiKey.isNullOrEmpty()) {
+        promise.reject("INVALID_API_KEY", "API key is required and cannot be empty", null)
+        return@AsyncFunction
+      }
+
+      val handlePermission = config["handlePermission"] as? Boolean ?: true
+      val entrigConfig = EntrigConfig(
+        apiKey = apiKey,
+        handlePermission = handlePermission
+      )
+
+      // Pass application context to ensure lifecycle callbacks are registered
+      val appContext = context.applicationContext
+      Entrig.initialize(appContext, entrigConfig) { success, error ->
+        if (success) {
+          promise.resolve(null)
+        } else {
+          promise.reject("INIT_ERROR", error ?: "Failed to initialize SDK", null)
+        }
+      }
+    }
+
+    // Register user
+    AsyncFunction("register") { userId: String, promise: Promise ->
+      val activity = currentActivity
+      if (activity == null) {
+        promise.reject("NO_ACTIVITY", "Activity not available", null)
+        return@AsyncFunction
+      }
+
+      Entrig.register(userId, activity) { success, error ->
+        if (success) {
+          promise.resolve(null)
+        } else {
+          promise.reject("REGISTER_ERROR", error ?: "Registration failed", null)
+        }
+      }
+    }
+
+    // Request permission
+    AsyncFunction("requestPermission") { promise: Promise ->
+      val activity = currentActivity
+      if (activity == null) {
+        promise.reject("NO_ACTIVITY", "Activity not available", null)
+        return@AsyncFunction
+      }
+
+      Entrig.requestPermission(activity) { granted ->
+        promise.resolve(granted)
+      }
+    }
+
+    // Unregister
+    AsyncFunction("unregister") { promise: Promise ->
+      Entrig.unregister { success, error ->
+        if (success) {
+          promise.resolve(null)
+        } else {
+          promise.reject("UNREGISTER_ERROR", error ?: "Unregistration failed", null)
+        }
+      }
+    }
+
+    // Get initial notification
+    AsyncFunction("getInitialNotification") { promise: Promise ->
+      val initialNotification = Entrig.getInitialNotification()
+      promise.resolve(initialNotification?.toMap())
     }
   }
 }

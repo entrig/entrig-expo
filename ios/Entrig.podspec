@@ -19,6 +19,7 @@ Pod::Spec.new do |s|
   s.static_framework = true
 
   s.dependency 'ExpoModulesCore'
+  s.dependency 'EntrigSDK', '0.0.7-dev'
 
   # Swift/Objective-C compatibility
   s.pod_target_xcconfig = {

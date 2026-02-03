@@ -1,14 +1,27 @@
 import { registerWebModule, NativeModule } from 'expo';
 
-import { EntrigModuleEvents } from './Entrig.types';
+import { EntrigModuleEvents, EntrigConfig, NotificationEvent } from './Entrig.types';
 
 class EntrigModule extends NativeModule<EntrigModuleEvents> {
-  PI = Math.PI;
-  async setValueAsync(value: string): Promise<void> {
-    this.emit('onChange', { value });
+  async init(config: EntrigConfig): Promise<void> {
+    console.warn('Entrig push notifications are not supported on web');
   }
-  hello() {
-    return 'Hello world! 👋';
+
+  async register(userId: string): Promise<void> {
+    console.warn('Entrig push notifications are not supported on web');
+  }
+
+  async requestPermission(): Promise<boolean> {
+    console.warn('Entrig push notifications are not supported on web');
+    return false;
+  }
+
+  async unregister(): Promise<void> {
+    console.warn('Entrig push notifications are not supported on web');
+  }
+
+  async getInitialNotification(): Promise<NotificationEvent | null> {
+    return null;
   }
 }
 

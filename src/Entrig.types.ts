@@ -1,19 +1,16 @@
-import type { StyleProp, ViewStyle } from 'react-native';
+export type NotificationEvent = {
+  title: string;
+  body: string;
+  data: Record<string, any>;
+  isForeground: boolean;
+};
 
-export type OnLoadEventPayload = {
-  url: string;
+export type EntrigConfig = {
+  apiKey: string;
+  handlePermission?: boolean;
 };
 
 export type EntrigModuleEvents = {
-  onChange: (params: ChangeEventPayload) => void;
-};
-
-export type ChangeEventPayload = {
-  value: string;
-};
-
-export type EntrigViewProps = {
-  url: string;
-  onLoad: (event: { nativeEvent: OnLoadEventPayload }) => void;
-  style?: StyleProp<ViewStyle>;
+  onForegroundNotification: (event: NotificationEvent) => void;
+  onNotificationOpened: (event: NotificationEvent) => void;
 };
