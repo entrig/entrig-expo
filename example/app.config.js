@@ -10,8 +10,10 @@ module.exports = {
     newArchEnabled: true,
     ios: {
       supportsTablet: true,
+      bundleIdentifier: 'com.entrig.demo',
     },
     android: {
+      package: 'com.entrig.demo',
       adaptiveIcon: {
         backgroundColor: '#E6F4FE',
         foregroundImage: './assets/images/android-icon-foreground.png',
@@ -45,8 +47,9 @@ module.exports = {
       reactCompiler: true,
     },
     extra: {
-      supabaseUrl: 'https://trxehkmjhbdagzgznqco.supabase.co',
-      supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyeGVoa21qaGJkYWd6Z3pucWNvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5ODk4ODYsImV4cCI6MjA2NTU2NTg4Nn0.7R-sIi7pfkrJnwVL6VRf4DwJY2H8rl0pIzRJOJjuvlU',
+      supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL,
+      supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
+      entrigApiKey: process.env.ENTRIG_API_KEY,
     },
   },
 };

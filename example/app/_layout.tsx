@@ -3,6 +3,8 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import 'react-native-reanimated';
+import Constants from 'expo-constants';
+import Entrig from 'entrig';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { supabase } from '@/lib/supabase';
@@ -12,21 +14,71 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [entrigInitialized, setEntrigInitialized] = useState(false);
   const segments = useSegments();
   const router = useRouter();
 
+  // Initialize Entrig
+  useEffect(() => {
+    const initEntrig = async () => {
+      try {
+        const apiKey = Constants.expoConfig?.extra?.entrigApiKey as string;
+        if (!apiKey) {
+          console.warn('Entrig API key not found');
+          return;
+        }
+
+        await Entrig.init({ apiKey });
+        setEntrigInitialized(true);
+        console.log('Entrig initialized successfully');
+
+        // Set up notification listeners
+        Entrig.addListener('onForegroundNotification', (event) => {
+          console.log('Foreground notification:', event);
+        });
+
+        Entrig.addListener('onNotificationOpened', (event) => {
+          console.log('Notification opened:', event);
+        });
+      } catch (error) {
+        console.error('Failed to initialize Entrig:', error);
+      }
+    };
+
+    initEntrig();
+  }, []);
+
+  // Handle auth state and Entrig registration
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setIsLoading(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
+
+      if (!entrigInitialized) return;
+
+      if (event === 'SIGNED_IN' && session?.user) {
+        try {
+          await Entrig.register(session.user.id);
+          console.log('User registered with Entrig:', session.user.id);
+        } catch (error) {
+          console.error('Failed to register with Entrig:', error);
+        }
+      } else if (event === 'SIGNED_OUT') {
+        try {
+          await Entrig.unregister();
+          console.log('User unregistered from Entrig');
+        } catch (error) {
+          console.error('Failed to unregister from Entrig:', error);
+        }
+      }
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [entrigInitialized]);
 
   useEffect(() => {
     if (isLoading) return;
