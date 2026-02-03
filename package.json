@@ -4,6 +4,9 @@
   "description": "Entrig | Push Notifications for Supabase",
   "main": "build/index.js",
   "types": "build/index.d.ts",
+  "bin": {
+    "entrig": "./bin/setup.js"
+  },
   "scripts": {
     "build": "expo-module build",
     "clean": "expo-module clean",
