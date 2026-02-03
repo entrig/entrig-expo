@@ -1,0 +1,9 @@
+{
+  "platforms": ["apple", "android", "web"],
+  "apple": {
+    "modules": ["EntrigModule"]
+  },
+  "android": {
+    "modules": ["expo.modules.entrig.EntrigModule"]
+  }
+}
