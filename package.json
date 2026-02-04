@@ -1,6 +1,6 @@
 {
   "name": "entrig",
-  "version": "0.1.0",
+  "version": "0.0.1-dev",
   "description": "Entrig | Push Notifications for Supabase",
   "main": "build/index.js",
   "types": "build/index.d.ts",
@@ -22,7 +22,11 @@
     "react-native",
     "expo",
     "entrig",
-    "Entrig"
+    "push-notifications",
+    "supabase",
+    "notifications",
+    "apns",
+    "fcm"
   ],
   "repository": "https://github.com/entrig/entrig-expo",
   "bugs": {
